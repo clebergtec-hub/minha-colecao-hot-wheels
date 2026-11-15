@@ -22,6 +22,32 @@ input{width:100%;background:#0f1420;color:var(--txt);border:1px solid #354158;bo
 </head>
 <body>
 <header><div><div class="brand">MINHA COLEÇÃO <span>HOT WHEELS</span></div><div class="sub">Seu inventário de miniaturas</div></div><div style="font-size:28px">🏎️</div></header>
+
+<section class="panel" id="cloudPanel" style="margin:12px 0">
+  <h2 style="margin:0 0 8px">☁️ Sincronização entre aparelhos</h2>
+  <p class="muted">Conecte sua conta privada para acessar a mesma coleção no iPhone, Chrome e Firefox.</p>
+  <div id="cloudSetup">
+    <label>URL do projeto Supabase</label><input id="sbUrl" placeholder="https://seu-projeto.supabase.co">
+    <label>Chave pública (anon / publishable)</label><input id="sbKey" placeholder="Cole aqui a chave pública do projeto">
+    <p class="muted">Use somente a chave pública anon/publishable. Nunca cole a service_role ou senha do banco.</p>
+    <button class="btn secondary" id="connectBtn" style="width:100%">Conectar projeto</button>
+  </div>
+  <div id="cloudAuth" class="hidden">
+    <div class="muted" id="cloudStatus">Projeto conectado.</div>
+    <label>E-mail</label><input id="cloudEmail" type="email" autocomplete="email" placeholder="seu e-mail">
+    <label>Senha da conta do aplicativo</label><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Crie uma senha forte">
+    <div class="row">
+      <button class="btn" id="signInBtn">Entrar</button>
+      <button class="btn secondary" id="signUpBtn">Criar conta</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn secondary" id="syncBtn">Sincronizar agora</button>
+      <button class="btn secondary" id="signOutBtn">Sair</button>
+    </div>
+    <div class="muted" id="cloudMsg" style="margin-top:10px"></div>
+  </div>
+</section>
+
 <h1>Olá, colecionador!</h1><div class="muted">Confira antes de comprar. Evite modelos repetidos.</div>
 <section class="stats"><div class="stat"><b id="total">0</b><small>CARRINHOS</small></div><div class="stat"><b id="models">0</b><small>MODELOS</small></div><div class="stat"><b id="wishes">0</b><small>DESEJADOS</small></div></section>
 <div class="actions"><button class="btn" data-show="scan">📷 Conferir carrinho</button><button class="btn secondary" data-show="add">＋ Cadastrar carrinho</button></div>
@@ -31,6 +57,7 @@ input{width:100%;background:#0f1420;color:var(--txt);border:1px solid #354158;bo
 <section id="add" class="hidden panel"><h2 style="margin-top:0">Cadastrar carrinho</h2><label>Foto do carrinho</label><div class="row"><button class="btn secondary" type="button" id="addCameraBtn">📷 Tirar foto</button><button class="btn secondary" type="button" id="addGalleryBtn">🖼️ Importar foto</button></div><input id="addCamera" type="file" accept="image/*" capture="environment" class="hidden"><input id="addGallery" type="file" accept="image/*" class="hidden"><img id="addPreview" class="preview" alt="Foto do carrinho"><label>Nome do modelo *</label><input id="name" placeholder="Ex.: '67 Camaro"><div class="row"><div><label>Série</label><input id="series" placeholder="Ex.: HW Flames"></div><div><label>Ano</label><input id="year" placeholder="2026" inputmode="numeric"></div></div><div class="row"><div><label>Cor / variação</label><input id="variant" placeholder="Ex.: vermelho, rodas"></div><div><label>Quantidade</label><input id="qty" type="number" min="1" value="1"></div></div><label>Código / referência (opcional)</label><input id="code" placeholder="Código da embalagem"><button class="btn" id="saveBtn" style="width:100%">Salvar na coleção</button><div id="addMsg" class="muted" style="margin-top:10px"></div></section>
 <section id="wish" class="hidden"><div class="panel"><label>Adicionar modelo desejado</label><div class="row"><input id="wishName" placeholder="Nome do Hot Wheels"><button class="btn gold" id="wishBtn" style="flex:0 0 105px">Adicionar</button></div></div><div id="wishItems"></div></section>
 <footer>Aplicativo pessoal • Faça backup regularmente. Nesta versão os dados ficam neste navegador/aparelho; a sincronização em nuvem será uma próxima etapa.</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id), STORE='hw_collection_v4', WSTORE='hw_wishes_v4';
@@ -63,6 +90,122 @@ $('importBtn').addEventListener('click',()=>$('importFile').click());
 $('importFile').addEventListener('change',async()=>{const f=$('importFile').files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!Array.isArray(data.cars)||!Array.isArray(data.wishes))throw Error();if(!confirm('Importar backup e substituir os dados atuais?'))return;cars=data.cars;wishes=data.wishes;save();alert('Backup importado!')}catch(e){alert('Arquivo de backup inválido.')}finally{$('importFile').value=''}});
 function render(){$('total').textContent=cars.reduce((n,c)=>n+(Number(c.qty)||1),0);$('models').textContent=cars.length;$('wishes').textContent=wishes.length;const q=norm($('search').value);const list=cars.filter(c=>!q||norm([c.name,c.series,c.year,c.variant,c.code].join(' ')).includes(q));$('items').innerHTML=list.length?list.map(c=>`<div class="card">${c.photo?`<img class="thumb" src="${c.photo}" alt="">`:'<div class="thumb placeholder">🏎️</div>'}<div style="flex:1;min-width:0"><b>${esc(c.name)}</b><div class="muted">${esc([c.series,c.year,c.variant].filter(Boolean).join(' • '))}</div><span class="pill">Quantidade: ${Number(c.qty)||1}</span></div><button class="btn secondary delete" data-id="${esc(c.id)}" style="padding:9px">Excluir</button></div>`).join(''):'<div class="empty">Sua coleção aparecerá aqui.<br>Cadastre seu primeiro carrinho!</div>';$('wishItems').innerHTML=wishes.length?wishes.map((w,i)=>`<div class="card"><div style="flex:1">⭐ ${esc(w)}</div><button class="btn secondary unwish" data-index="${i}" style="padding:9px">Remover</button></div>`).join(''):'<div class="empty">Sua lista de desejos está vazia.</div>';document.querySelectorAll('.delete').forEach(b=>b.addEventListener('click',()=>{if(confirm('Excluir este carrinho?')){cars=cars.filter(c=>c.id!==b.dataset.id);save()}}));document.querySelectorAll('.unwish').forEach(b=>b.addEventListener('click',()=>{wishes.splice(Number(b.dataset.index),1);save()}))}
 render();
+
+// --- Sincronização em nuvem opcional (Supabase; exige SQL de setup e conta) ---
+let sb = null, cloudUser = null;
+const SB_URL_KEY='hw_supabase_url_v1', SB_ANON_KEY='hw_supabase_anon_v1';
+const cloudMsg = (s)=>{ const el=$('cloudMsg'); if(el) el.textContent=s; };
+function initCloud(){
+  const url=localStorage.getItem(SB_URL_KEY)||'', key=localStorage.getItem(SB_ANON_KEY)||'';
+  $('sbUrl').value=url; $('sbKey').value=key;
+  if(url && key) connectSupabase(url,key,false);
+}
+function connectSupabase(url,key,showAlert=true){
+  if(!window.supabase?.createClient){cloudMsg('Não foi possível carregar a biblioteca de conexão. Verifique a internet.');return}
+  try{
+    const u=new URL(url);
+    if(u.protocol!=='https:' || !u.hostname.endsWith('.supabase.co')) throw Error();
+  }catch(e){cloudMsg('Informe a URL HTTPS do projeto Supabase.');return}
+  if(!key || key.length<20){cloudMsg('Informe a chave pública anon/publishable.');return}
+  localStorage.setItem(SB_URL_KEY,url); localStorage.setItem(SB_ANON_KEY,key);
+  sb=window.supabase.createClient(url,key);
+  $('cloudSetup').classList.add('hidden'); $('cloudAuth').classList.remove('hidden');
+  sb.auth.getSession().then(({data,error})=>{
+    if(error) cloudMsg('Erro ao verificar sessão: '+error.message);
+    else if(data.session){cloudUser=data.session.user; $('cloudStatus').textContent='Conectado como '+cloudUser.email; cloudMsg('Sessão ativa. Toque em Sincronizar agora.');}
+    else {$('cloudStatus').textContent='Projeto conectado. Entre ou crie sua conta.';cloudMsg('A coleção local não será enviada até você entrar e confirmar a sincronização.');}
+  });
+}
+$('connectBtn').addEventListener('click',()=>connectSupabase($('sbUrl').value.trim(),$('sbKey').value.trim()));
+$('signUpBtn').addEventListener('click',async()=>{
+  if(!sb){cloudMsg('Conecte primeiro o projeto.');return}
+  const email=$('cloudEmail').value.trim(), password=$('cloudPassword').value;
+  if(!email||password.length<8){cloudMsg('Informe e-mail e senha com pelo menos 8 caracteres.');return}
+  const {data,error}=await sb.auth.signUp({email,password});
+  if(error){cloudMsg('Não foi possível criar a conta: '+error.message);return}
+  cloudUser=data.user;
+  cloudMsg(data.session?'Conta criada. Agora toque em Sincronizar.':'Conta criada. Confira o e-mail de confirmação e depois entre no aplicativo.');
+});
+$('signInBtn').addEventListener('click',async()=>{
+  if(!sb){cloudMsg('Conecte primeiro o projeto.');return}
+  const {data,error}=await sb.auth.signInWithPassword({email:$('cloudEmail').value.trim(),password:$('cloudPassword').value});
+  if(error){cloudMsg('Falha no acesso: '+error.message);return}
+  cloudUser=data.user; $('cloudStatus').textContent='Conectado como '+cloudUser.email; cloudMsg('Acesso confirmado. Toque em Sincronizar agora.');
+});
+$('signOutBtn').addEventListener('click',async()=>{if(sb) await sb.auth.signOut();cloudUser=null;$('cloudStatus').textContent='Sessão encerrada.';cloudMsg('Seus dados locais continuam neste aparelho.');});
+async function photoToBlob(data){
+  if(!data) return null;
+  const res=await fetch(data); return await res.blob();
+}
+async function uploadCarPhoto(car){
+  if(!car.photo) return null;
+  const blob=await photoToBlob(car.photo);
+  const path=`${cloudUser.id}/${car.id || crypto.randomUUID()}.jpg`;
+  const {error}=await sb.storage.from('hotwheels-photos').upload(path,blob,{contentType:'image/jpeg',upsert:true});
+  if(error) throw error;
+  return path;
+}
+async function signedPhoto(path){
+  if(!path) return '';
+  const {data,error}=await sb.storage.from('hotwheels-photos').download(path);
+  if(error) throw error;
+  return await new Promise((resolve,reject)=>{
+    const reader=new FileReader(); reader.onload=()=>resolve(reader.result);
+    reader.onerror=()=>reject(new Error('Não foi possível baixar a foto da nuvem.'));
+    reader.readAsDataURL(data);
+  });
+}
+$('syncBtn').addEventListener('click',async()=>{
+  if(!sb){cloudMsg('Conecte primeiro o projeto.');return}
+  const {data:sessionData}=await sb.auth.getSession();
+  cloudUser=sessionData.session?.user;
+  if(!cloudUser){cloudMsg('Entre na sua conta antes de sincronizar.');return}
+  const btn=$('syncBtn');btn.disabled=true;btn.textContent='Sincronizando…';
+  try{
+    const {data:remote,error:readErr}=await sb.from('hotwheels_cars').select('*').order('created_at',{ascending:true});
+    if(readErr) throw readErr;
+    const remoteIds=new Set((remote||[]).map(x=>x.local_id));
+    const localIds=new Set(cars.map(x=>String(x.id)));
+    // First use on a device: upload local records not already in cloud.
+    for(const c of cars){
+      const localId=String(c.id);
+      if(!remoteIds.has(localId)){
+        const photo_path=await uploadCarPhoto(c);
+        const {error}=await sb.from('hotwheels_cars').insert({
+          local_id:localId,name:c.name,series:c.series||'',year:c.year||'',variant:c.variant||'',
+          qty:Number(c.qty)||1,code:c.code||'',photo_path
+        });
+        if(error) throw error;
+      }
+    }
+    // Pull cloud records absent locally; download private photos as signed URLs.
+    const {data:all,error:allErr}=await sb.from('hotwheels_cars').select('*').order('created_at',{ascending:true});
+    if(allErr) throw allErr;
+    const merged=[...cars];
+    for(const r of (all||[])){
+      if(!localIds.has(String(r.local_id))){
+        const photo=await signedPhoto(r.photo_path);
+        merged.push({id:String(r.local_id),name:r.name,series:r.series,year:r.year,variant:r.variant,qty:r.qty,code:r.code,photo});
+      }
+    }
+    // Sync wishlist using a separate user-scoped table.
+    const {data:rw,error:rwErr}=await sb.from('hotwheels_wishes').select('*');
+    if(rwErr) throw rwErr;
+    const existing=new Set(wishes.map(x=>String(x)));
+    for(const w of wishes) if(!(rw||[]).some(r=>r.name===w)){
+      const {error}=await sb.from('hotwheels_wishes').insert({name:w}); if(error) throw error;
+    }
+    const {data:allW,error:allWErr}=await sb.from('hotwheels_wishes').select('name');
+    if(allWErr) throw allWErr;
+    const mergedW=[...new Set([...wishes,...(allW||[]).map(x=>x.name)])];
+    cars=merged; wishes=mergedW;
+    if(!save()) throw Error('Não foi possível gravar a cópia local. Seus dados da nuvem permanecem preservados.');
+    cloudMsg(`Sincronização concluída: ${cars.length} modelos e ${wishes.length} desejados nesta conta. Repita nos outros aparelhos após entrar com o mesmo e-mail.`);
+  }catch(e){cloudMsg('Não foi possível sincronizar: '+(e.message||String(e))+'. Confira se executou o SQL de configuração e se a autenticação está ativa.');}
+  finally{btn.disabled=false;btn.textContent='Sincronizar agora';}
+});
+initCloud();
+
 if('serviceWorker' in navigator && location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
 </body></html>
