@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10131b">
+<meta name="description" content="Organize sua coleção Hot Wheels e confira possíveis modelos repetidos.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Minha Coleção Hot Wheels</title>
+<style>
+:root{--bg:#0d1017;--panel:#171c27;--panel2:#202737;--txt:#f4f6fb;--muted:#9ca8bc;--red:#ed2939;--gold:#f3c969;--green:#39c98a}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#151b29,#0b0e14 55%);color:var(--txt);font:16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:env(safe-area-inset-top) 16px calc(24px + env(safe-area-inset-bottom));max-width:760px;margin:auto;min-height:100vh}
+header{padding:22px 4px 16px;display:flex;align-items:center;justify-content:space-between}.brand{font-weight:900;letter-spacing:1.2px;font-size:16px}.brand span{color:var(--red)}.sub{color:var(--muted);font-size:13px;margin-top:4px}
+h1{font-size:27px;margin:14px 0 5px}.muted{color:var(--muted);font-size:14px;line-height:1.45}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:20px 0}.stat,.panel{background:var(--panel);border:1px solid #2a3344;border-radius:17px;padding:14px}.stat b{display:block;font-size:25px}.stat small{color:var(--muted);font-size:11px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}.btn{border:0;border-radius:13px;padding:14px 12px;font-weight:800;font-size:15px;background:var(--red);color:white;cursor:pointer}.btn.secondary{background:var(--panel2);border:1px solid #354158}.btn.gold{background:var(--gold);color:#171717}
+.tabs{display:flex;gap:7px;overflow:auto;margin:20px 0 12px}.tab{white-space:nowrap;background:transparent;color:var(--muted);border:1px solid #30394b;border-radius:20px;padding:10px 13px;cursor:pointer}.tab.active{background:#30394b;color:white;border-color:#53617a}
+input{width:100%;background:#0f1420;color:var(--txt);border:1px solid #354158;border-radius:11px;padding:13px;font:inherit;margin:6px 0 12px}label{font-size:12px;color:var(--muted);display:block}.row{display:flex;gap:9px}.row>*{flex:1;min-width:0}
+.card{display:flex;gap:12px;padding:11px;background:var(--panel);border:1px solid #2a3344;border-radius:15px;margin:9px 0;align-items:center}.thumb{width:82px;height:72px;object-fit:cover;border-radius:10px;background:#252d3c;flex:none}.placeholder{display:grid;place-items:center;font-size:28px}.pill{display:inline-block;font-size:10px;padding:4px 7px;border-radius:20px;background:#263b34;color:var(--green);margin-top:5px}.danger{color:#ff7883}.empty{text-align:center;padding:28px 12px;color:var(--muted)}
+.preview{width:100%;max-height:220px;object-fit:contain;border-radius:12px;background:#0c111b;display:none;margin:8px 0}.hidden{display:none!important}footer{text-align:center;color:#68758a;font-size:11px;padding:22px 0}
+</style>
+</head>
+<body>
+<header><div><div class="brand">MINHA COLEÇÃO <span>HOT WHEELS</span></div><div class="sub">Seu inventário de miniaturas</div></div><div style="font-size:28px">🏎️</div></header>
+<h1>Olá, colecionador!</h1><div class="muted">Confira antes de comprar. Evite modelos repetidos.</div>
+<section class="stats"><div class="stat"><b id="total">0</b><small>CARRINHOS</small></div><div class="stat"><b id="models">0</b><small>MODELOS</small></div><div class="stat"><b id="wishes">0</b><small>DESEJADOS</small></div></section>
+<div class="actions"><button class="btn" data-show="scan">📷 Conferir carrinho</button><button class="btn secondary" data-show="add">＋ Cadastrar carrinho</button></div>
+<nav class="tabs"><button class="tab active" data-show="collection">Minha coleção</button><button class="tab" data-show="scan">Conferir compra</button><button class="tab" data-show="wish">Lista de desejos</button></nav>
+<section id="collection"><input id="search" placeholder="Buscar por modelo, série ou fabricante…"><div id="items"></div><div class="actions"><button class="btn secondary" id="exportBtn">Exportar backup</button><button class="btn secondary" id="importBtn">Importar backup</button></div><input id="importFile" type="file" accept="application/json" class="hidden"></section>
+<section id="scan" class="hidden panel"><h2 style="margin-top:0">Conferir antes de comprar</h2><p class="muted">Fotografe o carrinho e informe o nome ou código para comparar com seu cadastro. A comparação visual é apenas auxiliar.</p><label>Foto do carrinho</label><input id="scanPhoto" type="file" accept="image/*" capture="environment"><img id="scanPreview" class="preview" alt="Foto para conferir"><label>Nome ou código do modelo</label><input id="scanName" placeholder="Ex.: '67 Camaro ou código"><button class="btn" id="checkBtn" style="width:100%">Verificar minha coleção</button><div id="result" style="margin-top:12px"></div></section>
+<section id="add" class="hidden panel"><h2 style="margin-top:0">Cadastrar carrinho</h2><label>Foto</label><input id="addPhoto" type="file" accept="image/*" capture="environment"><img id="addPreview" class="preview" alt="Foto do carrinho"><label>Nome do modelo *</label><input id="name" placeholder="Ex.: '67 Camaro"><div class="row"><div><label>Série</label><input id="series" placeholder="Ex.: HW Flames"></div><div><label>Ano</label><input id="year" placeholder="2026" inputmode="numeric"></div></div><div class="row"><div><label>Cor / variação</label><input id="variant" placeholder="Ex.: vermelho, rodas"></div><div><label>Quantidade</label><input id="qty" type="number" min="1" value="1"></div></div><label>Código / referência (opcional)</label><input id="code" placeholder="Código da embalagem"><button class="btn" id="saveBtn" style="width:100%">Salvar na coleção</button><div id="addMsg" class="muted" style="margin-top:10px"></div></section>
+<section id="wish" class="hidden"><div class="panel"><label>Adicionar modelo desejado</label><div class="row"><input id="wishName" placeholder="Nome do Hot Wheels"><button class="btn gold" id="wishBtn" style="flex:0 0 105px">Adicionar</button></div></div><div id="wishItems"></div></section>
+<footer>Aplicativo pessoal • Faça backup regularmente. Nesta versão os dados ficam neste navegador/aparelho; a sincronização em nuvem será uma próxima etapa.</footer>
+<script>
+'use strict';
+const $=id=>document.getElementById(id), STORE='hw_collection_v4', WSTORE='hw_wishes_v4';
+let cars=[], wishes=[], addPhotoData='', scanPhotoData='';
+try{cars=JSON.parse(localStorage.getItem(STORE)||'[]');wishes=JSON.parse(localStorage.getItem(WSTORE)||'[]')}catch(e){cars=[];wishes=[]}
+const save=()=>{localStorage.setItem(STORE,JSON.stringify(cars));localStorage.setItem(WSTORE,JSON.stringify(wishes));render()};
+const norm=s=>(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function show(id){['collection','scan','add','wish'].forEach(k=>$(k).classList.toggle('hidden',k!==id));document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.show===id));window.scrollTo({top:0,behavior:'smooth'})}
+document.querySelectorAll('[data-show]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.show)));
+function readPhoto(input,preview,which){const f=input.files&&input.files[0];if(!f)return;if(!f.type.startsWith('image/')){alert('Escolha uma imagem.');return}const reader=new FileReader();reader.onload=()=>{const data=reader.result;$(preview).src=data;$(preview).style.display='block';if(which==='add')addPhotoData=data;else scanPhotoData=data};reader.onerror=()=>alert('Não foi possível abrir a foto.');reader.readAsDataURL(f)}
+$('addPhoto').addEventListener('change',()=>readPhoto($('addPhoto'),'addPreview','add'));
+$('scanPhoto').addEventListener('change',()=>readPhoto($('scanPhoto'),'scanPreview','scan'));
+$('saveBtn').addEventListener('click',()=>{const name=$('name').value.trim();if(!name){alert('Informe o nome do modelo.');$('name').focus();return}cars.push({id:String(Date.now()),name,series:$('series').value.trim(),year:$('year').value.trim(),variant:$('variant').value.trim(),qty:Math.max(1,Number($('qty').value)||1),code:$('code').value.trim(),photo:addPhotoData});save();['name','series','year','variant','code'].forEach(k=>$(k).value='');$('qty').value='1';$('addPhoto').value='';$('addPreview').style.display='none';addPhotoData='';$('addMsg').textContent='Carrinho salvo na coleção!';show('collection')});
+$('search').addEventListener('input',render);
+$('checkBtn').addEventListener('click',checkCar);
+function checkCar(){const n=$('scanName').value.trim();if(!n&&!scanPhotoData){$('result').innerHTML='<p class="danger">Fotografe ou digite o nome/código do carrinho.</p>';return}
+const exact=n?cars.filter(c=>norm(c.name)===norm(n)||(c.code&&norm(c.code)===norm(n))):[];
+const partial=n?cars.filter(c=>!exact.includes(c)&&(norm(c.name).includes(norm(n))||norm(n).includes(norm(c.name)))):[];
+if(exact.length){$('result').innerHTML='<div class="panel"><b class="danger">⚠ JÁ ESTÁ NA SUA COLEÇÃO</b>'+exact.map(c=>`<p><b>${esc(c.name)}</b><br><span class="muted">Quantidade: ${c.qty} • ${esc(c.series)}</span></p>`).join('')+'</div>'}
+else if(partial.length){$('result').innerHTML='<div class="panel"><b>Possível correspondência pelo nome</b><p class="muted">Confira a variação antes de decidir.</p>'+partial.map(c=>`<p>${esc(c.name)} — ${esc(c.variant)} (qtd. ${c.qty})</p>`).join('')+'</div>'}
+else{$('result').innerHTML='<div class="panel"><b style="color:var(--green)">✓ Nenhuma correspondência por nome/código.</b><p class="muted">A foto ainda não identifica automaticamente o modelo. Confira visualmente e cadastre se for diferente.</p><button class="btn" id="toAdd">Cadastrar este modelo</button></div>';$('toAdd').addEventListener('click',()=>{$('name').value=n;show('add')})}}
+$('wishBtn').addEventListener('click',()=>{const v=$('wishName').value.trim();if(!v){alert('Digite o modelo desejado.');return}wishes.push(v);$('wishName').value='';save()});
+$('exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({cars,wishes,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-minha-colecao-hot-wheels.json';a.click();URL.revokeObjectURL(a.href)});
+$('importBtn').addEventListener('click',()=>$('importFile').click());
+$('importFile').addEventListener('change',async()=>{const f=$('importFile').files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!Array.isArray(data.cars)||!Array.isArray(data.wishes))throw Error();if(!confirm('Importar backup e substituir os dados atuais?'))return;cars=data.cars;wishes=data.wishes;save();alert('Backup importado!')}catch(e){alert('Arquivo de backup inválido.')}finally{$('importFile').value=''}});
+function render(){$('total').textContent=cars.reduce((n,c)=>n+(Number(c.qty)||1),0);$('models').textContent=cars.length;$('wishes').textContent=wishes.length;const q=norm($('search').value);const list=cars.filter(c=>!q||norm([c.name,c.series,c.year,c.variant,c.code].join(' ')).includes(q));$('items').innerHTML=list.length?list.map(c=>`<div class="card">${c.photo?`<img class="thumb" src="${c.photo}" alt="">`:'<div class="thumb placeholder">🏎️</div>'}<div style="flex:1;min-width:0"><b>${esc(c.name)}</b><div class="muted">${esc([c.series,c.year,c.variant].filter(Boolean).join(' • '))}</div><span class="pill">Quantidade: ${Number(c.qty)||1}</span></div><button class="btn secondary delete" data-id="${esc(c.id)}" style="padding:9px">Excluir</button></div>`).join(''):'<div class="empty">Sua coleção aparecerá aqui.<br>Cadastre seu primeiro carrinho!</div>';$('wishItems').innerHTML=wishes.length?wishes.map((w,i)=>`<div class="card"><div style="flex:1">⭐ ${esc(w)}</div><button class="btn secondary unwish" data-index="${i}" style="padding:9px">Remover</button></div>`).join(''):'<div class="empty">Sua lista de desejos está vazia.</div>';document.querySelectorAll('.delete').forEach(b=>b.addEventListener('click',()=>{if(confirm('Excluir este carrinho?')){cars=cars.filter(c=>c.id!==b.dataset.id);save()}}));document.querySelectorAll('.unwish').forEach(b=>b.addEventListener('click',()=>{wishes.splice(Number(b.dataset.index),1);save()}))}
+render();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+</script>
+</body></html>

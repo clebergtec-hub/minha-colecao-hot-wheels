@@ -1,0 +1,35 @@
+MINHA COLEÇÃO HOT WHEELS — VERSÃO GRATUITA
+
+O QUE ESTA VERSÃO FAZ
+- Cadastro de carrinhos com foto, modelo, série, ano, cor/variação, quantidade e código.
+- Pesquisa da coleção.
+- Conferência por nome/código para encontrar modelos já cadastrados ou possíveis correspondências.
+- Lista de desejos.
+- Backup e restauração em arquivo JSON.
+- Interface instalável como atalho na tela inicial do iPhone (PWA), quando publicada em HTTPS.
+
+IMPORTANTE
+- Esta versão não cobra mensalidade e não usa banco de dados pago.
+- Os dados e fotos ficam armazenados no navegador/aparelho. Limpar os dados do Safari pode apagar a coleção. Faça backups regularmente.
+- Não há sincronização automática entre aparelhos.
+- A foto não identifica automaticamente o modelo. A conferência usa o nome/código informado e os dados cadastrados.
+- A publicação no GitHub Pages pode ser gratuita em repositório público, conforme os limites e termos vigentes do GitHub. Não é necessário fornecer senha a ninguém.
+
+PUBLICAR GRATUITAMENTE PELO GITHUB PAGES
+1. Entre em github.com e crie um repositório novo chamado minha-colecao-hot-wheels.
+2. Escolha Public (Público). Não inclua README automático se possível.
+3. Clique em Add file > Upload files.
+4. Envie os arquivos desta pasta: index.html, manifest.json, sw.js, icon.svg e LEIA-ME.txt.
+5. Clique em Commit changes.
+6. No repositório, abra Settings > Pages.
+7. Em Build and deployment, selecione Deploy from a branch; Branch: main; Folder: /(root); clique Save.
+8. Aguarde o GitHub publicar e abra o endereço mostrado na própria tela Pages.
+
+INSTALAR NO IPHONE
+1. Abra o endereço publicado no Safari (não dentro do navegador do Instagram ou WhatsApp).
+2. Toque em Compartilhar.
+3. Escolha Adicionar à Tela de Início.
+4. Toque em Adicionar.
+
+BACKUP
+Na aba Minha coleção, use Exportar backup. Guarde o arquivo JSON em Arquivos/iCloud Drive ou outro local seguro. Para recuperar, use Importar backup.
